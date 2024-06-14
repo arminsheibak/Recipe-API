@@ -6,6 +6,7 @@ from rest_framework import status
 
 CREATE_USER_URL = reverse('users:create')
 TOKEN_URL = reverse('users:token')
+ME_URL = reverse('users:me')
 
 def create_user(**prams):
     return get_user_model().objects.create_user(**prams)
@@ -80,12 +81,37 @@ class TestPublicUserAPI(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertNotIn('token', response.data)
-        
+    
+    def test_retrieve_user_unauthorized(self):
+        response = self.client.get(ME_URL)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         
+class TestPrivateUserAPI(TestCase):
+    """ Test API requests that require authentication """
 
+    def setUp(self):
+        self.user = create_user(email='test@email.com', password='testpassword123', name='test')
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+    
+    def test_retrieve_profile_successfully(self):
+        response = self.client.get(ME_URL)
 
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'name' : self.user.name, 'email': self.user.email})
 
+    def test_post_request_on_profile_not_allowed(self):
+        response = self.client.post(ME_URL, {})
 
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    def test_update_profile_successfully(self):
+        payload = {'name': 'newname', 'password':'newpassword123'}
+        response = self.client.patch(ME_URL, payload)
+        self.user.refresh_from_db()
 
-
+        self.assertEqual(self.user.name, payload['name'])
+        self.assertTrue(self.user.check_password(payload['password']))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
