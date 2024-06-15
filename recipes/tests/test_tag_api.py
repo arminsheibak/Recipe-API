@@ -46,5 +46,19 @@ class TestPrivateTagAPI(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['name'], 'first tag')
+    
+    def test_create_tag_successfully(self):
+        payload = {'name': 'tagname'}
+        
+        response = self.client.post(TAGS_URL, payload)
+        exists = Tag.objects.filter(user=self.user, name=payload['name']).exists()
 
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(exists)
+
+
+    def test_create_invalid_tag_fail(self):
+        response = self.client.post(TAGS_URL, {})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
