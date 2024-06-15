@@ -116,4 +116,3 @@ class TestPrivateRecipeAPI(TestCase):
         self.assertEqual(ingredients.count(), 2)
         self.assertIn(ing1, ingredients)
         self.assertIn(ing2, ingredients)
-        

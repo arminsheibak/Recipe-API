@@ -2,6 +2,14 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+import uuid
+import os
+
+def recipe_image_file_path(instance, filename):
+    ext = filename.split('.')[-1]
+    filename = f'{uuid.uuid4()}.{ext}'
+    return os.path.join('uploads/recipes/', filename)
+
 
 
 class UserManager(BaseUserManager):
@@ -60,6 +68,9 @@ class Recipe(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     ingredients = models.ManyToManyField(Ingredient)
     tags = models.ManyToManyField(Tag)
+    image = models.ImageField(null=True, upload_to=recipe_image_file_path)
 
     def __str__(self):
         return self.title
+    
+        
